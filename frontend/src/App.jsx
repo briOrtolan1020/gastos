@@ -14,6 +14,7 @@ import {
   History,
   Trash2,
 } from "lucide-react";
+import { supabase } from "./supabaseClient";
 
 function obtenerStorage(clave, valorInicial) {
   const guardado = localStorage.getItem(clave);
@@ -122,18 +123,77 @@ function GastosBrisa() {
   cargarGastosBrisa();
 }, []);
 
+// async function cargarGastosBrisa() {
+//   try {
+//     const data = await getGastos();
+
+//     const gastosBrisa = data.filter(
+//       (gasto) => gasto.persona === "Brisa"
+//     );
+
+//     setGastos(gastosBrisa);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 async function cargarGastosBrisa() {
-  try {
-    const data = await getGastos();
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-    const gastosBrisa = data.filter(
-      (gasto) => gasto.persona === "Brisa"
-    );
+  const { data, error } = await supabase
+    .from("gastos")
+    .select("*")
+    .eq("user_id", usuario.id)
+    .eq("persona", "Brisa")
+    .order("id", { ascending: false });
 
-    setGastos(gastosBrisa);
-  } catch (error) {
-    console.log(error);
+  if (!error) {
+    setGastos(data);
   }
+}
+async function agregarGasto(e) {
+  e.preventDefault();
+
+  if (!detalle.trim() || !monto) return;
+
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
+
+  const { data, error } = await supabase
+    .from("gastos")
+    .insert([
+      {
+        user_id: usuario.id,
+        persona: "Brisa",
+        detalle,
+        monto: Number(monto),
+        categoria,
+        fecha: new Date()
+          .toISOString()
+          .split("T")[0],
+      },
+    ])
+    .select();
+
+  if (!error) {
+    setGastos([data[0], ...gastos]);
+
+    setDetalle("");
+    setMonto("");
+    setCategoria("Comida");
+  }
+} 
+async function eliminarGasto(id) {
+  await supabase
+    .from("gastos")
+    .delete()
+    .eq("id", id);
+
+  setGastos(
+    gastos.filter((gasto) => gasto.id !== id)
+  );
 }
 
   return (
@@ -183,58 +243,119 @@ const [gastos, setGastos] = useState([]);
   cargarGastosJoaquin();
 }, []);
 
+// async function cargarGastosJoaquin() {
+//   try {
+//     const data = await getGastos();
+
+//     const gastosJoaquin = data.filter(
+//       (gasto) => gasto.persona === "Joaquin"
+//     );
+
+//     setGastos(gastosJoaquin);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
+
 async function cargarGastosJoaquin() {
-  try {
-    const data = await getGastos();
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-    const gastosJoaquin = data.filter(
-      (gasto) => gasto.persona === "Joaquin"
-    );
+  const { data, error } = await supabase
+    .from("gastos")
+    .select("*")
+    .eq("user_id", usuario.id)
+    .eq("persona", "Joaquin")
+    .order("id", { ascending: false });
 
-    setGastos(gastosJoaquin);
-  } catch (error) {
-    console.log(error);
+  if (!error) {
+    setGastos(data);
   }
 }
 
   const sueldoTotal = quincena1 + quincena2;
 
+// async function agregarGasto(e) {
+//   e.preventDefault();
+
+//   if (!detalle.trim() || !monto) return;
+
+//   try {
+//     const nuevoGasto = {
+//       persona: "Joaquin",
+//       detalle,
+//       monto: Number(monto),
+//       categoria,
+//       fecha: new Date().toLocaleDateString("es-AR"),
+//     };
+
+//     const gastoGuardado = await crearGasto(nuevoGasto);
+
+//     setGastos([gastoGuardado, ...gastos]);
+
+//     setDetalle("");
+//     setMonto("");
+//     setCategoria("Comida");
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 async function agregarGasto(e) {
   e.preventDefault();
 
   if (!detalle.trim() || !monto) return;
 
-  try {
-    const nuevoGasto = {
-      persona: "Joaquin",
-      detalle,
-      monto: Number(monto),
-      categoria,
-      fecha: new Date().toLocaleDateString("es-AR"),
-    };
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario")
+  );
 
-    const gastoGuardado = await crearGasto(nuevoGasto);
+  const { data, error } = await supabase
+    .from("gastos")
+    .insert([
+      {
+        user_id: usuario.id,
+        persona: "Joaquin",
+        detalle,
+        monto: Number(monto),
+        categoria,
+        fecha: new Date()
+          .toISOString()
+          .split("T")[0],
+      },
+    ])
+    .select();
 
-    setGastos([gastoGuardado, ...gastos]);
+  if (!error) {
+    setGastos([data[0], ...gastos]);
 
     setDetalle("");
     setMonto("");
     setCategoria("Comida");
-  } catch (error) {
-    console.log(error);
   }
 }
 
-  async function eliminarGasto(id) {
-  try {
-    await eliminarGastoDB(id);
+//   async function eliminarGasto(id) {
+//   try {
+//     await eliminarGastoDB(id);
 
-    setGastos(
-      gastos.filter((gasto) => gasto.id !== id)
-    );
-  } catch (error) {
-    console.log(error);
-  }
+//     setGastos(
+//       gastos.filter((gasto) => gasto.id !== id)
+//     );
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
+
+async function eliminarGasto(id) {
+  await supabase
+    .from("gastos")
+    .delete()
+    .eq("id", id);
+
+  setGastos(
+    gastos.filter((gasto) => gasto.id !== id)
+  );
 }
 
   const totalGastado = gastos.reduce(
@@ -939,10 +1060,12 @@ function MenuItem({ to, icon, text }) {
   );
 }
 export default function App() {
-  const token = localStorage.getItem("token");
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const usuario = JSON.parse(
+  localStorage.getItem("usuario")
+);
+  // const usuario = JSON.parse(localStorage.getItem("usuario"));
 
-  if (!token) {
+  if (!usuario) {
     return (
       <>
         <Toaster position="top-center" />
@@ -966,10 +1089,9 @@ export default function App() {
 
   <button
     onClick={() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("usuario");
-      window.location.reload();
-    }}
+  localStorage.removeItem("usuario");
+  window.location.reload();
+}}
     className="mt-3 bg-white/20 hover:bg-white/30 rounded-xl px-3 py-2 text-xs font-bold"
   >
     Cerrar sesión

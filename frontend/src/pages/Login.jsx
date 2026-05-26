@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { supabase } from "../supabaseClient";
 
 const API_URL = "http://localhost:3001/api";
 
@@ -11,51 +12,53 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
 
-    try {
-      if (modoRegistro) {
-        await axios.post(`${API_URL}/auth/register`, {
-          nombre,
-          email,
-          password,
-        });
+ async function handleSubmit(e) {
+  e.preventDefault();
 
-        toast.success("Usuario creado correctamente");
+  try {
+    if (modoRegistro) {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            nombre,
+          },
+        },
+      });
 
-        setModoRegistro(false);
+      if (error) throw error;
 
-        return;
-      }
+      toast.success("Cuenta creada");
 
-      const res = await axios.post(
-        `${API_URL}/auth/login`,
-        {
-          email,
-          password,
-        }
-      );
+      setModoRegistro(false);
 
-      localStorage.setItem(
-        "token",
-        res.data.token
-      );
-
-      localStorage.setItem(
-        "usuario",
-        JSON.stringify(res.data.usuario)
-      );
-
-      toast.success("Bienvenido");
-
-      window.location.href = "/";
-    } catch (error) {
-      console.log(error);
-
-      toast.error("Ocurrió un error");
+      return;
     }
+
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (error) throw error;
+
+    localStorage.setItem(
+      "usuario",
+      JSON.stringify(data.user)
+    );
+
+    toast.success("Bienvenido");
+
+    window.location.href = "/";
+  } catch (error) {
+    console.log(error);
+
+    toast.error(error.message);
   }
+}
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6">
